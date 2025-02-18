@@ -1,6 +1,11 @@
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import Model from './model/Model';
+import Program from './view/CubicProgram';
+import { Circle } from './model/Curves';
+import Complex from './model/Complex';
+
 import "./App.css";
 
 function App() {
@@ -18,25 +23,39 @@ function App() {
     // const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
 
     const camera = new THREE.OrthographicCamera(
-        100 / -16,
-        100 / 16,
-        100 / 16,
-        100 / -16,
+        1000 / -16,
+        1000 / 16,
+        1000 / 16,
+        1000 / -16,
         1,
         1000
       );
 
-    camera.position.z = 5;
-
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
-    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-    const cube = new THREE.Mesh(geometry, material);
+    camera.position.z = 100;
 
     const scene = new THREE.Scene();
-    scene.add(cube);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.update();
+
+    const model = new Model({
+      matrixSize: 40,
+    });
+    model.addCurve(
+      new Circle([
+        { label: "x0", value: new Complex(0, 0) },
+        { label: "y0", value: new Complex(0, 0) },
+        { label: "r",  value: new Complex(1, 0) }
+      ])
+    );
+    const program = new Program(
+      renderer,
+      scene,
+      camera,
+      model,
+    );
+
+    program.render();
 
     renderer.render(scene, camera);
     rendererRef.current = renderer;
@@ -48,6 +67,11 @@ function App() {
     }
 
     requestAnimationFrame(animate);
+    return () => {
+      program.clean(); // Seems like disposing does not work (
+      renderer.dispose();
+      containerRef.current.innerHTML = '';
+    }
   }, []);
 
   return (
