@@ -106,16 +106,19 @@ export default class CubicProgram {
     this.scene.add(this.light);
     this.scene.add(this.globalLight);
 
-    performance.mark("grid");
+    performance.mark("grid-start");
     this._buildGrid();
-    performance.mark("curve");
-    this._buildCurveMesh();
-    performance.mark("finish");
+    performance.mark("grid-end");
+    console.table(performance.measure("grid-start", "grid-end"));
 
-    console.table([
-      performance.measure("grid", "curve"),
-      performance.measure("curve", "finish"),
-    ]);
+    this.buildModel();
+  }
+
+  buildModel() {
+    performance.mark("curve-start");
+    this._buildCurveMesh();
+    performance.mark("curve-end");
+    console.table(performance.measure("curve-start", "curve-end"));
   }
 
   updateLight(pos) {

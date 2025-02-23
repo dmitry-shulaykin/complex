@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
@@ -11,6 +11,7 @@ export function ThreeWrapper(props) {
   const { mappings, model } = props;
   const rendererRef = useRef();
   const containerRef = useRef();
+  const programRef = useRef();
 
   useLayoutEffect(() => {
     const width = Math.floor(containerRef.current.parentNode.offsetWidth / 2);
@@ -40,7 +41,7 @@ export function ThreeWrapper(props) {
     camera.position.z = 100;
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0.8, 0.8, 0.8);
+    scene.background = new THREE.Color().setRGB(0.5, 0.5, 0.5);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.update();
@@ -52,6 +53,7 @@ export function ThreeWrapper(props) {
     );
 
     program.buildScene();
+    programRef.current = program;
 
     renderer.render(scene, camera);
     rendererRef.current = renderer;
@@ -72,6 +74,16 @@ export function ThreeWrapper(props) {
       containerRef.current.innerHTML = '';
     }
   }, []);
+
+  useEffect(() => {
+    console.log('Model was changed');
+    const program = programRef.current;
+    if (program) {
+      program.model = model;
+      program.buildScene();
+    }
+
+  }, [model]);
 
   return (<div
     className='three-wrapper'

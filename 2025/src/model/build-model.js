@@ -6,6 +6,7 @@ import { Parser, Formula } from './Parser';
 export const buildModel = (code, params) => {
     try {
         const userFunction = eval(code);
+        console.log('userFunction', userFunction);
         const model = userFunction(
           Model,
           Curves,
