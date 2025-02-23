@@ -72,6 +72,7 @@ export default class CubicProgram {
   }
 
   buildScene() {
+    console.log('Building scene');
     this.light = new THREE.DirectionalLight(0xeeeeee, 0.65);
     this.globalLight = new THREE.AmbientLight(new THREE.Color(1, 1, 1), 0.05);
     this.light.position.set(0, 0, 1).normalize();
@@ -79,8 +80,16 @@ export default class CubicProgram {
     this.scene.add(this.light);
     this.scene.add(this.globalLight);
 
+    performance.mark('grid')
     this._buildGrid();
+    performance.mark('curve')
     this._buildCurveMesh();
+    performance.mark('finish');
+
+    console.table([
+      performance.measure('grid', 'curve'),
+      performance.measure('curve', 'finish')
+    ]);
   }
 
   updateLight(pos) {
@@ -135,32 +144,14 @@ export default class CubicProgram {
       positions.push(a.x, a.y, a.z, b.x, b.y, b.z);
     };
 
-    const totalSize = 100;
+    const totalCells = 50;
 
     const drawGrid = (mapLine) => {
-      for (let i = 0; i < totalSize; i++) {
-        for (let j = 0; j < totalSize; j++) {
-          const x = -totalSize / 2 + i * this.cellSize;
-          const y = -totalSize / 2 + j * this.cellSize;
-          addLine(x, y, x + this.cellSize, y, mapLine, gridPositions);
-          addLine(
-            x + this.cellSize,
-            y,
-            x + this.cellSize,
-            y + this.cellSize,
-            mapLine,
-            gridPositions
-          );
-          addLine(
-            x + this.cellSize,
-            y + this.cellSize,
-            x,
-            y + this.cellSize,
-            mapLine,
-            gridPositions
-          );
-          addLine(x, y + this.cellSize, x, y, mapLine, gridPositions);
-        }
+      for (let i = -totalCells; i <= totalCells; i++) {
+        const a = i * this.cellSize;
+        const b = totalCells * this.cellSize;
+        addLine(a, -b, a, b, mapLine, gridPositions);
+        addLine(-b, a, b, a, mapLine, gridPositions);
       }
     };
 
@@ -170,13 +161,10 @@ export default class CubicProgram {
         drawGrid(mp);
       }
     }
-
     
     addLine(-100, 0, 100, 0, mapLineY, xAxisPositions);
     addLine(0, -100, 0, 100, mapLineZ, yAxisPositions);
     addLine(0, -100, 0, 100, mapLineY, zAxisPositions);
-
-    console.log(gridPositions);
 
     gridGeometry.setAttribute(
       "position",
