@@ -8,7 +8,7 @@ import Complex from '../model/Complex';
 
 import './three-wrapper.css';
 
-export function ThreeWrapper() {
+export function ThreeWrapper(props) {
   const rendererRef = useRef();
   const containerRef = useRef();
 
@@ -58,6 +58,7 @@ export function ThreeWrapper() {
       renderer,
       scene,
       model,
+      props.mappings
     );
 
     program.render();

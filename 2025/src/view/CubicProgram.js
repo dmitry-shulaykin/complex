@@ -40,7 +40,7 @@ export default class CubicProgram {
 
   render() {
     // console.log("projecting ");
-    this.projection = new Projection3D(this.model, 1);
+    this.projection = new Projection3D(this.model, 1, this.mappings);
     // console.log("total model data = " + this.model.data.size);
     this.projection.calcData();
 
