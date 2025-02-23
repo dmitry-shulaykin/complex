@@ -1,14 +1,14 @@
 import { useLayoutEffect, useRef } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import Model from '../model/Model';
+
 import Program from '../view/CubicProgram';
-import { Circle } from '../model/Curves';
-import Complex from '../model/Complex';
+
 
 import './three-wrapper.css';
 
 export function ThreeWrapper(props) {
+  const { mappings, model } = props;
   const rendererRef = useRef();
   const containerRef = useRef();
 
@@ -43,22 +43,11 @@ export function ThreeWrapper(props) {
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.update();
-
-    const model = new Model({
-      matrixSize: 40,
-    });
-    model.addCurve(
-      new Circle([
-        { label: "x0", value: new Complex(0, 0) },
-        { label: "y0", value: new Complex(0, 0) },
-        { label: "r",  value: new Complex(1, 0) }
-      ])
-    );
     const program = new Program(
       renderer,
       scene,
       model,
-      props.mappings
+      mappings,
     );
 
     program.render();
