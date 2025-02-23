@@ -2,18 +2,16 @@ import * as THREE from "three";
 
 import Projection3D from "../model/Projection3D";
 
-export default class TestThreeProgram {
+export default class CubicProgram {
   constructor(
     renderer, 
     scene, 
-    camera,
     model, 
     mappings
   ) {
     this.model = model;
     this.renderer = renderer;
     this.scene = scene;
-    this.camera = camera;
 
     this.mappings = mappings; // Optional
     this.needGrid = true;
@@ -37,6 +35,7 @@ export default class TestThreeProgram {
     });
 
     this.cellSize = 1;
+    this.materialsMap = new Map();
   }
 
   render() {
@@ -57,9 +56,9 @@ export default class TestThreeProgram {
     // Do we need to clean?
 
     // console.log("program setup");
-    const materialsMap = new Map();
+    
     const getMatrerial = color => {
-      let existing = materialsMap.get(color);
+      let existing = this.materialsMap.get(color);
 
       if (existing) {
         return existing;
@@ -67,7 +66,7 @@ export default class TestThreeProgram {
         let material = new THREE.MeshLambertMaterial({
           color: new THREE.Color(color.r / 255, color.g / 255, color.b / 255)
         });
-        materialsMap.set(color, material);
+        this.materialsMap.set(color, material);
         return material;
       }
     };
@@ -79,7 +78,6 @@ export default class TestThreeProgram {
       const y = -this.totalSize / 2 + (box.y + 1 / 2) * this.cellSize;
       const z = -this.totalSize / 2 + (box.z + 1 / 2) * this.cellSize;
       const mat = getMatrerial(box.color);
-      // console.log(mat);
       const mesh = new THREE.Mesh(geometry, mat);
       this.meshes.push(mesh)
       mesh.position.set(x, y, z);
@@ -94,16 +92,23 @@ export default class TestThreeProgram {
     this.scene.add(this.globalLight);
 
     // this._addGrid();
-    this.renderer.render(this.scene, this.camera);
     return this.meshes;
   }
 
   clean(){
-    for(let mesh of this.meshes){
+    for(const mesh of this.meshes){
       try {
-        mesh?.dispose();
-      } catch {
-        console.warn('Failed to dispose mesh.');
+        mesh?.geometry?.dispose();
+      } catch (error) {
+        console.warn('Failed to dispose mesh.', mesh, error);
+      }
+    }
+
+    for (const material of this.materialsMap.values()) {
+      try {
+        material?.dispose();
+      } catch (error) {
+        console.warn('Failed to dispose material.', material, error);
       }
     }
   }
