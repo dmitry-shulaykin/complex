@@ -62,16 +62,38 @@ export default class CubicProgram {
       }
     };
 
-    let geometry = new THREE.BoxGeometry(0.95, 0.95, 0.95);
-    for (let box of this.data) {
-      const x = -this.totalSize / 2 + (box.x + 1 / 2) * this.cellSize;
-      const y = -this.totalSize / 2 + (box.y + 1 / 2) * this.cellSize;
-      const z = -this.totalSize / 2 + (box.z + 1 / 2) * this.cellSize;
-      const mat = getMatrerial(box.color);
-      const mesh = new THREE.Mesh(geometry, mat);
-      this.curveMeshes.push(mesh);
-      mesh.position.set(x, y, z);
+    
+    const chunks = new Map();
+    for (const box of this.data) {
+      const index = "c" + box.curve + "f" + box.formula;
+      const chunk = chunks.get(index);
+      if (!chunk) {
+        chunks.set(index, [box]);
+      } else {
+        chunks.get(index).push(box);
+      }
+    }
+
+    const geometry = new THREE.BoxGeometry(0.95, 0.95, 0.95);
+
+    const quaternion = new THREE.Quaternion();
+    const scale = new THREE.Vector3(1, 1, 1);
+
+    for (const [_chunkLabel, data] of chunks) {
+      const material = getMatrerial(data[0].color);
+      const mesh = new THREE.InstancedMesh(geometry, material, data.length);
+      let counter = 0;
+      for (const box of data) {
+        const x = -this.totalSize / 2 + (box.x + 1 / 2) * this.cellSize;
+        const y = -this.totalSize / 2 + (box.y + 1 / 2) * this.cellSize;
+        const z = -this.totalSize / 2 + (box.z + 1 / 2) * this.cellSize;
+        const position = new THREE.Vector3(x, y, z);
+        const m = new THREE.Matrix4();
+        mesh.setMatrixAt(counter, m.compose(position, quaternion, scale))
+        counter += 1;
+      }
       this.scene.add(mesh);
+      this.curveMeshes.push(mesh);
     }
   }
 
