@@ -16,8 +16,6 @@ export function ThreeWrapper(props) {
     const width = Math.floor(containerRef.current.parentNode.offsetWidth / 2);
     const height = Math.floor(containerRef.current.parentNode.offsetHeight / 2);
 
-    console.log('container size', width, height);
-
     const renderer = new THREE.WebGLRenderer({ antialias: true });
 
     renderer.setSize(width, height);
@@ -51,7 +49,7 @@ export function ThreeWrapper(props) {
       mappings,
     );
 
-    program.render();
+    program.buildScene();
 
     renderer.render(scene, camera);
     rendererRef.current = renderer;

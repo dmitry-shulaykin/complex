@@ -3,12 +3,7 @@ import * as THREE from "three";
 import Projection3D from "../model/Projection3D";
 
 export default class CubicProgram {
-  constructor(
-    renderer, 
-    scene, 
-    model, 
-    mappings
-  ) {
+  constructor(renderer, scene, model, mappings) {
     this.model = model;
     this.renderer = renderer;
     this.scene = scene;
@@ -22,22 +17,22 @@ export default class CubicProgram {
     });
     this.xAxiesMaterial = new THREE.LineBasicMaterial({
       color: 0xff0000,
-      linewidth: 2
+      linewidth: 2,
     });
     this.yAxiesMaterial = new THREE.LineBasicMaterial({
       color: 0x00ff00,
-      linewidth: 2
+      linewidth: 2,
     });
     this.zAxiesMaterial = new THREE.LineBasicMaterial({
       color: 0x0000ff,
-      linewidth: 2
+      linewidth: 2,
     });
 
     this.cellSize = 1;
     this.materialsMap = new Map();
   }
 
-  buildCurveMesh() {
+  _buildCurveMesh() {
     if (!this.model) {
       return;
     }
@@ -49,14 +44,14 @@ export default class CubicProgram {
     this.projection.calcData();
     this.data = this.projection.projData;
 
-    const getMatrerial = color => {
+    const getMatrerial = (color) => {
       let existing = this.materialsMap.get(color);
 
       if (existing) {
         return existing;
       } else {
         let material = new THREE.MeshLambertMaterial({
-          color: new THREE.Color(color.r / 255, color.g / 255, color.b / 255)
+          color: new THREE.Color(color.r / 255, color.g / 255, color.b / 255),
         });
         this.materialsMap.set(color, material);
         return material;
@@ -70,30 +65,32 @@ export default class CubicProgram {
       const z = -this.totalSize / 2 + (box.z + 1 / 2) * this.cellSize;
       const mat = getMatrerial(box.color);
       const mesh = new THREE.Mesh(geometry, mat);
-      this.meshes.push(mesh)
+      this.meshes.push(mesh);
       mesh.position.set(x, y, z);
       this.scene.add(mesh);
     }
   }
 
-  render() {
+  buildScene() {
     this.light = new THREE.DirectionalLight(0xeeeeee, 0.65);
     this.globalLight = new THREE.AmbientLight(new THREE.Color(1, 1, 1), 0.05);
     this.light.position.set(0, 0, 1).normalize();
     this.light.castShadow = true;
     this.scene.add(this.light);
     this.scene.add(this.globalLight);
-    this.buildCurveMesh();
+
+    this._buildGrid();
+    this._buildCurveMesh();
   }
 
   updateLight(pos) {
     this.light.position.set(pos.x, pos.y, pos.z).normalize();
   }
 
-  cleanCurveMesh(){
-    console.log('Cleaning curve mesh', this.meshes.length);
+  cleanCurveMesh() {
+    console.log("Cleaning curve mesh", this.meshes.length);
 
-    for(const mesh of this.meshes){
+    for (const mesh of this.meshes) {
       if (!mesh) {
         continue;
       }
@@ -102,7 +99,7 @@ export default class CubicProgram {
         mesh.geometry?.dispose();
         this.scene.remove(mesh);
       } catch (error) {
-        console.warn('Failed to dispose mesh.', mesh, error);
+        console.warn("Failed to dispose mesh.", mesh, error);
       }
     }
 
@@ -110,45 +107,49 @@ export default class CubicProgram {
       try {
         material?.dispose();
       } catch (error) {
-        console.warn('Failed to dispose material.', material, error);
+        console.warn("Failed to dispose material.", material, error);
       }
     }
 
     this.meshes = [];
   }
 
-  _addGrid() {
+  _buildGrid() {
     // const mapLineX = (x, y) => new THREE.Vector3(0, x, y);
     const mapLineY = (x, y) => new THREE.Vector3(x, 0, y);
     const mapLineZ = (x, y) => new THREE.Vector3(x, y, 0);
 
-    let gridGeometry = new THREE.BufferGeometry();
-    let xAxiesGeometry = new THREE.BufferGeometry();
-    let yAxiesGeometry = new THREE.BufferGeometry();
-    let zAxiesGeometry = new THREE.BufferGeometry();
+    const gridGeometry = new THREE.BufferGeometry();
+    const xAxiesGeometry = new THREE.BufferGeometry();
+    const yAxiesGeometry = new THREE.BufferGeometry();
+    const zAxiesGeometry = new THREE.BufferGeometry();
 
-    const addLine = (x1, y1, x2, y2, mapLine, geometry) => {
-      if (!geometry.vertices) {
-        geometry.vertices = new Float32Array();
-      }
-      geometry.vertices.push(mapLine(x1, y1), mapLine(x2, y2));
+    const gridPositions = [];
+    const xAxisPositions = [];
+    const yAxisPositions = [];
+    const zAxisPositions = [];
+
+    const addLine = (x1, y1, x2, y2, mapLine, positions) => {
+      const a = mapLine(x1, y1);
+      const b = mapLine(x2, y2);
+      positions.push(a.x, a.y, a.z, b.x, b.y, b.z);
     };
 
     const totalSize = 100;
 
-    const drawGrid = mapLine => {
+    const drawGrid = (mapLine) => {
       for (let i = 0; i < totalSize; i++) {
         for (let j = 0; j < totalSize; j++) {
           const x = -totalSize / 2 + i * this.cellSize;
           const y = -totalSize / 2 + j * this.cellSize;
-          addLine(x, y, x + this.cellSize, y, mapLine, gridGeometry);
+          addLine(x, y, x + this.cellSize, y, mapLine, gridPositions);
           addLine(
             x + this.cellSize,
             y,
             x + this.cellSize,
             y + this.cellSize,
             mapLine,
-            gridGeometry
+            gridPositions
           );
           addLine(
             x + this.cellSize,
@@ -156,9 +157,9 @@ export default class CubicProgram {
             x,
             y + this.cellSize,
             mapLine,
-            gridGeometry
+            gridPositions
           );
-          addLine(x, y + this.cellSize, x, y, mapLine, gridGeometry);
+          addLine(x, y + this.cellSize, x, y, mapLine, gridPositions);
         }
       }
     };
@@ -170,9 +171,36 @@ export default class CubicProgram {
       }
     }
 
-    addLine(-100, 0, 100, 0, mapLineY, xAxiesGeometry);
-    addLine(0, -100, 0, 100, mapLineZ, yAxiesGeometry);
-    addLine(0, -100, 0, 100, mapLineY, zAxiesGeometry);
+    
+    addLine(-100, 0, 100, 0, mapLineY, xAxisPositions);
+    addLine(0, -100, 0, 100, mapLineZ, yAxisPositions);
+    addLine(0, -100, 0, 100, mapLineY, zAxisPositions);
+
+    console.log(gridPositions);
+
+    gridGeometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(gridPositions, 3)
+    );
+    gridGeometry.computeBoundingSphere();
+
+    xAxiesGeometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(xAxisPositions, 3)
+    )
+    xAxiesGeometry.computeBoundingSphere();
+
+    yAxiesGeometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(yAxisPositions, 3)
+    )
+    yAxiesGeometry.computeBoundingSphere();
+
+    zAxiesGeometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(zAxisPositions, 3)
+    )
+    zAxiesGeometry.computeBoundingSphere();
 
     let lines = new THREE.LineSegments(gridGeometry, this.gridMaterial);
     this.scene.add(lines);
