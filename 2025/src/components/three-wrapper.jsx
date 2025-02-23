@@ -35,6 +35,8 @@ export function ThreeWrapper(props) {
       1000
     );
 
+    camera.position.x = 100;
+    camera.position.y = 100;
     camera.position.z = 100;
 
     const scene = new THREE.Scene();
