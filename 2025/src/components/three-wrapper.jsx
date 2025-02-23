@@ -64,7 +64,8 @@ export function ThreeWrapper(props) {
     requestAnimationFrame(animate);
 
     return () => {
-      program.cleanCurveMesh(); // Seems like disposing does not work (
+      console.log('Unmounting component, doing major cleanup');
+      program.clear();
       renderer.dispose();
       containerRef.current.innerHTML = '';
     }

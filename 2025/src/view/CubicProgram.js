@@ -7,11 +7,14 @@ export default class CubicProgram {
     this.model = model;
     this.renderer = renderer;
     this.scene = scene;
+
     this.mappings = mappings; // Optional
+
     this.needGrid = true;
     this.needAxies = true;
 
-    this.meshes = [];
+    this.curveMeshes = [];
+
     this.gridMaterial = new THREE.LineBasicMaterial({
       color: 0xaaaaaa,
     });
@@ -34,10 +37,11 @@ export default class CubicProgram {
 
   _buildCurveMesh() {
     if (!this.model) {
+      console.warn("No model passed");
       return;
     }
 
-    this.cleanCurveMesh();
+    this.clearCurveMesh();
 
     this.totalSize = this.cellSize * this.model.matrixSize;
     this.projection = new Projection3D(this.model, 1, this.mappings);
@@ -65,14 +69,14 @@ export default class CubicProgram {
       const z = -this.totalSize / 2 + (box.z + 1 / 2) * this.cellSize;
       const mat = getMatrerial(box.color);
       const mesh = new THREE.Mesh(geometry, mat);
-      this.meshes.push(mesh);
+      this.curveMeshes.push(mesh);
       mesh.position.set(x, y, z);
       this.scene.add(mesh);
     }
   }
 
   buildScene() {
-    console.log('Building scene');
+    console.log("Building scene");
     this.light = new THREE.DirectionalLight(0xeeeeee, 0.65);
     this.globalLight = new THREE.AmbientLight(new THREE.Color(1, 1, 1), 0.05);
     this.light.position.set(0, 0, 1).normalize();
@@ -80,15 +84,15 @@ export default class CubicProgram {
     this.scene.add(this.light);
     this.scene.add(this.globalLight);
 
-    performance.mark('grid')
+    performance.mark("grid");
     this._buildGrid();
-    performance.mark('curve')
+    performance.mark("curve");
     this._buildCurveMesh();
-    performance.mark('finish');
+    performance.mark("finish");
 
     console.table([
-      performance.measure('grid', 'curve'),
-      performance.measure('curve', 'finish')
+      performance.measure("grid", "curve"),
+      performance.measure("curve", "finish"),
     ]);
   }
 
@@ -96,10 +100,27 @@ export default class CubicProgram {
     this.light.position.set(pos.x, pos.y, pos.z).normalize();
   }
 
-  cleanCurveMesh() {
-    console.log("Cleaning curve mesh", this.meshes.length);
+  clear() {
+    this.clearCurveMesh();
+    this.clearGridMesh();
+  }
 
-    for (const mesh of this.meshes) {
+  clearGridMesh() {
+    this._clearMeshes(this.gridMeshes);
+
+    this.gridMaterial.dispose();
+    this.xAxiesMaterial.dispose();
+    this.yAxiesMaterial.dispose();
+    this.zAxiesMaterial.dispose();
+
+    this.scene.remove(this.light);
+    this.scene.remove(this.globalLight);
+  }
+
+  clearCurveMesh() {
+    this._clearMeshes(this.curveMeshes);
+
+    for (const mesh of this.curveMeshes) {
       if (!mesh) {
         continue;
       }
@@ -120,18 +141,14 @@ export default class CubicProgram {
       }
     }
 
-    this.meshes = [];
+    this.materialsMap = new Map();
+    this.curveMeshes = [];
   }
 
   _buildGrid() {
     // const mapLineX = (x, y) => new THREE.Vector3(0, x, y);
-    const mapLineY = (x, y) => new THREE.Vector3(x, 0, y);
-    const mapLineZ = (x, y) => new THREE.Vector3(x, y, 0);
-
-    const gridGeometry = new THREE.BufferGeometry();
-    const xAxiesGeometry = new THREE.BufferGeometry();
-    const yAxiesGeometry = new THREE.BufferGeometry();
-    const zAxiesGeometry = new THREE.BufferGeometry();
+    const mapLineY = (x, y, positions) => positions.push(x, 0, y);
+    const mapLineZ = (x, y, positions) => positions.push(x, y, 0);
 
     const gridPositions = [];
     const xAxisPositions = [];
@@ -139,9 +156,8 @@ export default class CubicProgram {
     const zAxisPositions = [];
 
     const addLine = (x1, y1, x2, y2, mapLine, positions) => {
-      const a = mapLine(x1, y1);
-      const b = mapLine(x2, y2);
-      positions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+      mapLine(x1, y1, positions);
+      mapLine(x2, y2, positions);
     };
 
     const totalCells = 50;
@@ -155,45 +171,63 @@ export default class CubicProgram {
       }
     };
 
-    const mappings = [mapLineY];
+    const mappings = [mapLineY /* mapLineZ */];
     for (let mp of mappings) {
       if (this.needGrid) {
         drawGrid(mp);
       }
     }
-    
+
     addLine(-100, 0, 100, 0, mapLineY, xAxisPositions);
     addLine(0, -100, 0, 100, mapLineZ, yAxisPositions);
     addLine(0, -100, 0, 100, mapLineY, zAxisPositions);
 
-    gridGeometry.setAttribute(
+    const gridGeometry = this._createGeometry(gridPositions);
+    const xAxiesGeometry = this._createGeometry(xAxisPositions);
+    const yAxiesGeometry = this._createGeometry(yAxisPositions);
+    const zAxiesGeometry = this._createGeometry(zAxisPositions);
+
+    const gridMesh = new THREE.LineSegments(gridGeometry, this.gridMaterial);
+    const xAxisMesh = new THREE.LineSegments(xAxiesGeometry, this.xAxiesMaterial);
+    const yAxisMesh = new THREE.LineSegments(yAxiesGeometry, this.yAxiesMaterial);
+    const zAxisMesh = new THREE.LineSegments(zAxiesGeometry, this.zAxiesMaterial);
+
+    this.scene.add(gridMesh);
+    this.scene.add(xAxisMesh);
+    this.scene.add(yAxisMesh);
+    this.scene.add(zAxisMesh);
+
+    this.gridMeshes = [
+      gridMesh,
+      xAxisMesh,
+      yAxisMesh,
+      zAxisMesh,
+    ];
+  }
+
+  _clearMeshes(meshes) {
+    console.log("Cleaning meshes, count: ", this.curveMeshes.length);
+    for (const mesh of meshes) {
+      if (!mesh) {
+        continue;
+      }
+
+      try {
+        mesh.geometry?.dispose();
+        this.scene.remove(mesh);
+      } catch (error) {
+        console.warn("Failed to dispose mesh.", mesh, error);
+      }
+    }
+  }
+
+  _createGeometry(positions) {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute(
       "position",
-      new THREE.Float32BufferAttribute(gridPositions, 3)
+      new THREE.Float32BufferAttribute(positions, 3)
     );
-    gridGeometry.computeBoundingSphere();
-
-    xAxiesGeometry.setAttribute(
-      "position",
-      new THREE.Float32BufferAttribute(xAxisPositions, 3)
-    )
-    xAxiesGeometry.computeBoundingSphere();
-
-    yAxiesGeometry.setAttribute(
-      "position",
-      new THREE.Float32BufferAttribute(yAxisPositions, 3)
-    )
-    yAxiesGeometry.computeBoundingSphere();
-
-    zAxiesGeometry.setAttribute(
-      "position",
-      new THREE.Float32BufferAttribute(zAxisPositions, 3)
-    )
-    zAxiesGeometry.computeBoundingSphere();
-
-    let lines = new THREE.LineSegments(gridGeometry, this.gridMaterial);
-    this.scene.add(lines);
-    this.scene.add(new THREE.LineSegments(xAxiesGeometry, this.xAxiesMaterial));
-    this.scene.add(new THREE.LineSegments(yAxiesGeometry, this.yAxiesMaterial));
-    this.scene.add(new THREE.LineSegments(zAxiesGeometry, this.zAxiesMaterial));
+    geometry.computeBoundingSphere();
+    return geometry;
   }
 }
