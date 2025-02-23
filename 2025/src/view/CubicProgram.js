@@ -91,9 +91,16 @@ export default class CubicProgram {
   }
 
   cleanCurveMesh(){
+    console.log('Cleaning curve mesh', this.meshes.length);
+
     for(const mesh of this.meshes){
+      if (!mesh) {
+        continue;
+      }
+
       try {
-        mesh?.geometry?.dispose();
+        mesh.geometry?.dispose();
+        this.scene.remove(mesh);
       } catch (error) {
         console.warn('Failed to dispose mesh.', mesh, error);
       }
@@ -107,9 +114,7 @@ export default class CubicProgram {
       }
     }
 
-    // while (this.scene.children.length > 0) {
-    //   this.scene.remove(this.scene.children[0]);
-    // }
+    this.meshes = [];
   }
 
   _addGrid() {
