@@ -53,44 +53,12 @@ export default class Model {
     for (let curve of this.curves) {
       if (!curve.disabled) this.renderCurve(curve);
     }
-
-    if (this.onRebuild) {
-      for (let callback of this.onRebuild) {
-        callback();
-      }
-    }
-  }
-
-  subscribe(callback) {
-    this.onRebuild.add(callback);
-  }
-
-  unsubscribe(callback) {
-    this.onRebuild.delete(callback);
-  }
-
-  backupCurves() {
-    // !TODO save state to local storage
-    // console.log();
-    // window.localStorage.setItem("curves", JSON.stringify([...this.curves]));
-    // let curves = window.localStorage.getItem("curves");
-    // console.log("backuping curves");
-  }
-    // console.log(curves);
-
-  tryLoadLocalStorage() {
-    // !TODO load state from local storage
-    let curves = window.localStorage.getItem("curves");
-    if (JSON.parse(curves).entries) {
-      this.curves = new Map(JSON.parse(curves));
-    }
   }
 
   addCurve(curve) {
     curve.index = this.curves.size;
     this.curves.add(curve);
     this.renderCurve(curve);
-    this.backupCurves();
     this.rebuild();
   }
 
@@ -107,16 +75,8 @@ export default class Model {
     this.rebuild();
   }
 
-  cleanCurves() {
-    // TODO fix this
-    // workaround
-    window.location.reload();
-    // this.curves.clear();
-  }
-
   renderCurve(curve) {
     const data = curve.getData(this);
-    // console.log(data);
     this.addData(data, curve.index);
   }
 
@@ -147,8 +107,6 @@ export default class Model {
         //console.log('not in bounds');
       }
     } else {
-      // console.log("data is not a single point");
-      // console.table(data);
       for (let k of data) {
         this.addData(k, curveIndex);
       }

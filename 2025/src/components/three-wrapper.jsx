@@ -40,6 +40,7 @@ export function ThreeWrapper(props) {
     camera.position.z = 100;
 
     const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0.8, 0.8, 0.8);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.update();
@@ -58,16 +59,16 @@ export function ThreeWrapper(props) {
     function animate() {
       requestAnimationFrame(animate);
       controls.update();
+      program.updateLight(camera.position)
       renderer.render(scene, camera);
     }
 
     requestAnimationFrame(animate);
 
     return () => {
-      program.clean(); // Seems like disposing does not work (
+      program.cleanCurveMesh(); // Seems like disposing does not work (
       renderer.dispose();
       containerRef.current.innerHTML = '';
-      window.removeEventListener('resize', resizeHandler);
     }
   }, []);
 

@@ -8,7 +8,6 @@ export default class TestThreeProgram {
     if(!this.model.programs)
       this.model.programs = [];
     this.model.programs.push(this);
-    // this.model.subscribe(this.render.bind(this));
     this.mappings = mappings;
     this.needGrid = true;
     this.needAxies = true;

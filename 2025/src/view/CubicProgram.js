@@ -12,7 +12,6 @@ export default class CubicProgram {
     this.model = model;
     this.renderer = renderer;
     this.scene = scene;
-
     this.mappings = mappings; // Optional
     this.needGrid = true;
     this.needAxies = true;
@@ -38,25 +37,18 @@ export default class CubicProgram {
     this.materialsMap = new Map();
   }
 
-  render() {
-    // console.log("projecting ");
-    this.projection = new Projection3D(this.model, 1, this.mappings);
-    // console.log("total model data = " + this.model.data.size);
-    this.projection.calcData();
+  buildCurveMesh() {
+    if (!this.model) {
+      return;
+    }
 
-    this.data = this.projection.projData;
-    // console.log("total data for geometry = " + this.data.size);
+    this.cleanCurveMesh();
 
     this.totalSize = this.cellSize * this.model.matrixSize;
+    this.projection = new Projection3D(this.model, 1, this.mappings);
+    this.projection.calcData();
+    this.data = this.projection.projData;
 
-    // remove all objects
-    while (this.scene.children.length > 0) {
-      this.scene.remove(this.scene.children[0]);
-    }
-    // Do we need to clean?
-
-    // console.log("program setup");
-    
     const getMatrerial = color => {
       let existing = this.materialsMap.get(color);
 
@@ -71,8 +63,7 @@ export default class CubicProgram {
       }
     };
 
-    let geometry = new THREE.BoxGeometry(1, 1, 1);
-
+    let geometry = new THREE.BoxGeometry(0.95, 0.95, 0.95);
     for (let box of this.data) {
       const x = -this.totalSize / 2 + (box.x + 1 / 2) * this.cellSize;
       const y = -this.totalSize / 2 + (box.y + 1 / 2) * this.cellSize;
@@ -83,19 +74,23 @@ export default class CubicProgram {
       mesh.position.set(x, y, z);
       this.scene.add(mesh);
     }
+  }
 
-    this.light = new THREE.DirectionalLight(0xffffff, 0.7);
-    this.globalLight = new THREE.AmbientLight(new THREE.Color(1, 1, 1), 0.3);
+  render() {
+    this.light = new THREE.DirectionalLight(0xeeeeee, 0.65);
+    this.globalLight = new THREE.AmbientLight(new THREE.Color(1, 1, 1), 0.05);
     this.light.position.set(0, 0, 1).normalize();
     this.light.castShadow = true;
     this.scene.add(this.light);
     this.scene.add(this.globalLight);
-
-    // this._addGrid();
-    return this.meshes;
+    this.buildCurveMesh();
   }
 
-  clean(){
+  updateLight(pos) {
+    this.light.position.set(pos.x, pos.y, pos.z).normalize();
+  }
+
+  cleanCurveMesh(){
     for(const mesh of this.meshes){
       try {
         mesh?.geometry?.dispose();
@@ -111,6 +106,10 @@ export default class CubicProgram {
         console.warn('Failed to dispose material.', material, error);
       }
     }
+
+    // while (this.scene.children.length > 0) {
+    //   this.scene.remove(this.scene.children[0]);
+    // }
   }
 
   _addGrid() {
