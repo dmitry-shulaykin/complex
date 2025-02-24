@@ -1,8 +1,22 @@
 .code-editor {
-    width: 500px;
-    height: 100%;
+    background-color: var(--dark5);
+}
+
+.ace_gutter {
+    background-color: var(--dark3)!important;
 }
 
 .actions {
-    margin: 5px 5px;
+    padding: 5px 5px;
+    background-color: var(--dark3);
+}
+
+.action-btn {
+    font-size: 16px;
+}
+
+.header {
+    padding: 5px 10px;
+    background-color: var(--dark3);
+    font-size: 24px;
 }

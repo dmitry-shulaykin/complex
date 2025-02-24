@@ -14,8 +14,8 @@ export function ThreeWrapper(props) {
   const programRef = useRef();
 
   useLayoutEffect(() => {
-    const width = Math.floor(containerRef.current.parentNode.offsetWidth / 2);
-    const height = Math.floor(containerRef.current.parentNode.offsetHeight / 2);
+    const width = Math.floor(containerRef.current.parentNode.offsetWidth / 2) - 2;
+    const height = Math.floor(containerRef.current.parentNode.offsetHeight / 2) - 2;
 
     const renderer = new THREE.WebGLRenderer({ antialias: true });
 
@@ -36,9 +36,9 @@ export function ThreeWrapper(props) {
       1000
     );
 
-    camera.position.x = 100;
-    camera.position.y = 100;
-    camera.position.z = 100;
+    camera.position.x = 300;
+    camera.position.y = 300;
+    camera.position.z = 300;
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color().setRGB(0.5, 0.5, 0.5);
@@ -80,7 +80,7 @@ export function ThreeWrapper(props) {
     const program = programRef.current;
     if (program) {
       program.model = model;
-      program.buildScene();
+      program.buildModel();
     }
 
   }, [model]);

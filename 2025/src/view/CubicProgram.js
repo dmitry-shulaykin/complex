@@ -99,10 +99,9 @@ export default class CubicProgram {
 
   buildScene() {
     console.log("Building scene");
-    this.light = new THREE.DirectionalLight(0xeeeeee, 0.65);
+    this.light = new THREE.DirectionalLight(0xFFFFFF, 0.35);
     this.globalLight = new THREE.AmbientLight(new THREE.Color(1, 1, 1), 0.05);
-    this.light.position.set(0, 0, 1).normalize();
-    this.light.castShadow = true;
+    
     this.scene.add(this.light);
     this.scene.add(this.globalLight);
 
@@ -185,7 +184,9 @@ export default class CubicProgram {
       mapLine(x2, y2, positions);
     };
 
-    const totalCells = 50;
+    const matrixSize = 200;
+    const gridSize = matrixSize * 2;
+    const totalCells = matrixSize;
 
     const drawGrid = (mapLine) => {
       for (let i = -totalCells; i <= totalCells; i++) {
@@ -203,9 +204,9 @@ export default class CubicProgram {
       }
     }
 
-    addLine(-100, 0, 100, 0, mapLineY, xAxisPositions);
-    addLine(0, -100, 0, 100, mapLineZ, yAxisPositions);
-    addLine(0, -100, 0, 100, mapLineY, zAxisPositions);
+    addLine(-gridSize, 0, gridSize, 0, mapLineY, xAxisPositions);
+    addLine(0, -gridSize, 0, gridSize, mapLineZ, yAxisPositions);
+    addLine(0, -gridSize, 0, gridSize, mapLineY, zAxisPositions);
 
     const gridGeometry = this._createGeometry(gridPositions);
     const xAxiesGeometry = this._createGeometry(xAxisPositions);
